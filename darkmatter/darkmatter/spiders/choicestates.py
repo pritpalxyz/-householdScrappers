@@ -11,7 +11,7 @@ class ChoicestatesSpider(scrapy.Spider):
 	start_urls = ['http://www.1stchoiceestates.com']
 
 	def __init__(self,location="london",*args, **kwargs):
-		super(ChoicestatesSpider, self).__init__(*args, **kwargs)
+		super(self.__class__, self).__init__(*args, **kwargs)
 		self.declare_xpath()
 		self._location=location
 		self._makeurl = """http://www.1stchoiceestates.com/?s=&sale-type=all&location=%s&type=&beds=&baths=&min=&max=&orderby=date&order=DESC&nr=10

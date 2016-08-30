@@ -11,7 +11,7 @@ class AbbypropertiesSpider(scrapy.Spider):
 	start_urls = ['http://www.abbyproperties.com']
 
 	def __init__(self,*args, **kwargs):
-		super(AbbypropertiesSpider, self).__init__(*args, **kwargs)
+		super(self.__class__, self).__init__(*args, **kwargs)
 		self.declate_xpath()
 		locID = [5,6]
 		for i in locID:
