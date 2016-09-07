@@ -1,41 +1,39 @@
 # -*- coding: utf-8 -*-
 import scrapy
-
-
-
-
 from bs4 import BeautifulSoup
 import re
 from darkmatter.items import DarkmatterItem
 
+class ElliotleighSpider(scrapy.Spider):
+	name = "elliotleigh"
+	start_urls = ['http://www.elliotleigh.com/']
 
-class AbbypropertiesSpider(scrapy.Spider):
-	name = "abbyproperties"
-	allowed_domains = ["abbyproperties.com"]
-	start_urls = ['http://www.abbyproperties.com']
 
 	def __init__(self,*args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
-		self.declate_xpath()
-		locID = [5,6]
-		for i in locID:
-			myurl = """http://www.abbyproperties.com/search.aspx?ListingType=%s&areainformation=&areainformationname=Location&radius=0&statusids=1,2,3,6,7,8,16&igid=&imgid=&egid=&emgid=&category=1&defaultlistingtype=5&markettype=0&cur=GBP"""%(i)
-			self.start_urls.append(myurl)
+		self.declare_xpath()
+		for pageno in range(1,19):
+			makeurl = """http://www.elliotleigh.com/search.aspx?quicksearch=&igid=&imgid=9&egid=&emgid=&category=1&defaultlistingtype=5&markettype=0#&&OrderByColumnIndex=0&Page=%s&OrderByDirection=1&ItemsPerPage=5&Currency=GBP"""%(pageno)
+			self.start_urls.append(makeurl)
 
-	def declate_xpath(self):
-		self._list_xpath = "//img[@class='smallImage mainimage-scroller-item']/../@href"
+	def declare_xpath(self):
+		self._list_of_posts = "//div[@class='ListPropertyCellLeft']/a/@href"
 
-		self._title_xpath = "//h1/text()"
-		self._description_xpath = "//div[@class='PropertyDetails']//div[@class='property-fulldetails-section'][1]/span/text()"
+		self._title_xpath = "//div[@class='FDProName']/span/text()"
 
-		self._prize_xpath = "//div[@class='galleryInner']//h2/span/text()"
+		self._description_xpath = "//span[@id='ctl00_cntrlCenterRegion_cntrlProperties_item_0_ctl00_lblBriefDescription']/text()"
+
+		self._address_xpath = "//span[@id='ctl00_cntrlCenterRegion_cntrlProperties_item_0_ctl00_lblFormattedAddress']/text()"
+
+		self._prize_xpath = "//span[@id='ctl00_cntrlCenterRegion_cntrlProperties_item_0_ctl00_lblFormattedPrice']/text()"
 
 	def parse(self, response):
-		for href in response.xpath(self._list_xpath):
+		for href in response.xpath(self._list_of_posts):
 			full_url = response.urljoin(href.extract())
 			yield scrapy.Request(full_url, callback=self.parse_info)
 
 	def parse_info(self,response):
+
 		item = DarkmatterItem()
 
 		title = response.xpath(self._title_xpath).extract()
@@ -44,37 +42,21 @@ class AbbypropertiesSpider(scrapy.Spider):
 		description = response.xpath(self._description_xpath).extract()
 		description = self.cleanText(self.parseText(self.listToStr(description)))
 
-		url = str(response.url)
+		location = response.xpath(self._address_xpath).extract()
+		location = self.cleanText(self.parseText(self.listToStr(location)))
 
 		prize = response.xpath(self._prize_xpath).extract()
 		prize = self.cleanText(self.parseText(self.listToStr(prize)))
 
-		prize_type = ''.join([i for i in prize if not i.isdigit()])
-		prize_type = prize_type.split(" ")[1]
-
-		Type = str(url.split("/")[5])
-		Type = Type.replace("for-","")
-
-		country = str(url.split('/')[6])
-
-		state = str(url.split('/')[7])
-		state = state.replace("-"," ")
-
-		location = "%s %s"%(state,country)
-
-		
-
-		ObjectType = str(url.split("/")[4])
-
-		# Some of Items not Availabe on site so i am leaving it blank
+		prize_type = prize.split(" ")[2]
 
 		item['url'] 				= response.url
 		item['title']				= title
 		item['description'] 		= description
 		item['location_address'] 	= location
 		item['zipCode']				= ''
-		item['Type']				= Type			 			
-		item['ObjectType']			= ObjectType
+		item['Type']				= ''			 			
+		item['ObjectType']			= ''
 		item['Price'] 				= prize
 		item['PriceType'] 			= prize_type
 		item['Rooms']	 			= ''
@@ -82,6 +64,9 @@ class AbbypropertiesSpider(scrapy.Spider):
 		item['Bedrooms']			= ''
 		item['Square'] 				= ''
 		yield item
+
+
+
 
 	def listToStr(self,MyLst):
 		_dumm = ""
@@ -98,13 +83,3 @@ class AbbypropertiesSpider(scrapy.Spider):
 		text = soup.get_text();
 		text = re.sub("( +|\n|\r|\t|\0|\x0b|\xa0|\xbb|\xab)+",' ',text).strip()
 		return text 
-
-
-
-
-
-
-
-
-
-
