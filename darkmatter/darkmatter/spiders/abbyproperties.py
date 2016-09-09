@@ -68,6 +68,8 @@ class AbbypropertiesSpider(scrapy.Spider):
 
 		# Some of Items not Availabe on site so i am leaving it blank
 
+
+
 		item['url'] 				= response.url
 		item['title']				= title
 		item['description'] 		= description
